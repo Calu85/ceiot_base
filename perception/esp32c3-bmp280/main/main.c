@@ -28,7 +28,7 @@
 /* HTTP constants that aren't configurable in menuconfig */
 #define WEB_PATH "/measurement"
 
-static const char *TAG = "temp_collector";
+static const char *TAG = "bicho";
 
 static char *BODY = "id="DEVICE_ID"&t=%0.2f&h=%0.2f&p=%0.2f";
 
@@ -39,6 +39,8 @@ static char *REQUEST_POST = "POST "WEB_PATH" HTTP/1.0\r\n"
     "Content-Length: %d\r\n"
     "\r\n"
     "%s";
+
+static char *MAC_FORMAT ="%02x:%02x:%02x:%02x:%02x:%02x\n";
 
 static void http_get_task(void *pvParameters)
 {
@@ -51,9 +53,9 @@ static void http_get_task(void *pvParameters)
     int s, r;
     char body[64];
     char recv_buf[64];
-
     char send_buf[256];
 
+    char mac_dir[17];    
     bmp280_params_t params;
     bmp280_init_default_params(&params);
     bmp280_t dev;
@@ -67,21 +69,23 @@ static void http_get_task(void *pvParameters)
 
     float pressure, temperature, humidity;
 
-
+    uint8_t baseMac[6];
+    esp_wifi_get_mac(WIFI_IF_STA, baseMac);
+    sprintf(mac_dir,MAC_FORMAT,
+        baseMac[0], baseMac[1], baseMac[2],
+        baseMac[3], baseMac[4], baseMac[5]);
+    ESP_LOGI(TAG,"MAC: \n%s\n",mac_dir);
 
     while(1) {
         if (bmp280_read_float(&dev, &temperature, &pressure, &humidity) != ESP_OK) {
             ESP_LOGI(TAG, "Temperature/pressure reading failed\n");
         } else {
-            ESP_LOGI(TAG, "Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
-//            if (bme280p) {
-                ESP_LOGI(TAG,", Humidity: %.2f\n", humidity);
-		sprintf(body, BODY, temperature , humidity , pressure);
-                sprintf(send_buf, REQUEST_POST, (int)strlen(body),body );
-//	    } else {
-//                sprintf(send_buf, REQUEST_POST, temperature , 0);
-//            }
-	    ESP_LOGI(TAG,"sending: \n%s\n",send_buf);
+            //ESP_LOGI(TAG, "Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
+            //ESP_LOGI(TAG,", Humidity: %.2f\n", humidity);
+		    sprintf(body, BODY, temperature , humidity , pressure);
+            sprintf(send_buf, REQUEST_POST, (int)strlen(body),body );
+            //ESP_LOGI(TAG,"body: \n%s\n",body);
+	        //ESP_LOGI(TAG,"Enviando: \n%s\n",send_buf);
         }    
 
         int err = getaddrinfo(API_IP, API_PORT, &hints, &res);
@@ -151,10 +155,10 @@ static void http_get_task(void *pvParameters)
         close(s);
 
         for(int countdown = 10; countdown >= 0; countdown--) {
-            ESP_LOGI(TAG, "%d... ", countdown);
+            //ESP_LOGI(TAG, "%d... ", countdown);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
-        ESP_LOGI(TAG, "Starting again!");
+        ESP_LOGI(TAG, "Otra vez");
     }
 }
 
