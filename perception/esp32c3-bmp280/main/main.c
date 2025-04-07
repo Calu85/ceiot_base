@@ -30,7 +30,7 @@
 
 static const char *TAG = "bicho";
 
-static char *BODY = "id="DEVICE_ID"&t=%0.2f&h=%0.2f&p=%0.2f";
+static char *BODY = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
 
 static char *REQUEST_POST = "POST "WEB_PATH" HTTP/1.0\r\n"
     "Host: "API_IP_PORT"\r\n"
@@ -40,7 +40,7 @@ static char *REQUEST_POST = "POST "WEB_PATH" HTTP/1.0\r\n"
     "\r\n"
     "%s";
 
-static char *MAC_FORMAT ="%02x:%02x:%02x:%02x:%02x:%02x\n";
+static char *MAC_FORMAT ="%02x:%02x:%02x:%02x:%02x:%02x";
 
 static void http_get_task(void *pvParameters)
 {
@@ -74,7 +74,7 @@ static void http_get_task(void *pvParameters)
     sprintf(mac_dir,MAC_FORMAT,
         baseMac[0], baseMac[1], baseMac[2],
         baseMac[3], baseMac[4], baseMac[5]);
-    ESP_LOGI(TAG,"MAC: \n%s\n",mac_dir);
+    ESP_LOGI(TAG,"MAC: %s\n",mac_dir);
 
     while(1) {
         if (bmp280_read_float(&dev, &temperature, &pressure, &humidity) != ESP_OK) {
@@ -82,7 +82,7 @@ static void http_get_task(void *pvParameters)
         } else {
             //ESP_LOGI(TAG, "Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
             //ESP_LOGI(TAG,", Humidity: %.2f\n", humidity);
-		    sprintf(body, BODY, temperature , humidity , pressure);
+		    sprintf(body, BODY, mac_dir, temperature , humidity , pressure);
             sprintf(send_buf, REQUEST_POST, (int)strlen(body),body );
             //ESP_LOGI(TAG,"body: \n%s\n",body);
 	        //ESP_LOGI(TAG,"Enviando: \n%s\n",send_buf);
