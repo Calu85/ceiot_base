@@ -26,13 +26,13 @@
 #include "../config.h"
 
 /* HTTP constants that aren't configurable in menuconfig */
-//#define WEB_PATH "/measurement"
-#define WEB_PATH "/device"
+#define MEASUREMENT_ENDP "/measurement"
+#define DEVICE_ENDP "/device"
 static const char *TAG = "bicho";
 
-//static char *BODY = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
+static char *BODY_MEASURE = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
 static char *BODY_DEVICE = "id=%s&n="DEVICE_NAME"&k="DEVICE_KEY"";
-static char *REQUEST_POST = "POST "WEB_PATH" HTTP/1.0\r\n"
+static char *REQUEST_POST = "POST %s HTTP/1.0\r\n"
     "Host: "API_IP_PORT"\r\n"
     "User-Agent: "USER_AGENT"\r\n"
     "Content-Type: application/x-www-form-urlencoded\r\n"
@@ -49,11 +49,12 @@ static void http_get_task(void *pvParameters)
         .ai_socktype = SOCK_STREAM,
     };
     struct addrinfo *res;
-    struct in_addr *addr;
+    //struct in_addr *addr;
     int s, r;
     char body[64];
     char recv_buf[64];
     char send_buf[256];
+    bool registered = 0;
 
     char mac_dir[17];    
     bmp280_params_t params;
@@ -77,16 +78,22 @@ static void http_get_task(void *pvParameters)
     ESP_LOGI(TAG,"MAC: %s\n",mac_dir);
 
     while(1) {
-        if (bmp280_read_float(&dev, &temperature, &pressure, &humidity) != ESP_OK) {
-            ESP_LOGI(TAG, "Temperature/pressure reading failed\n");
-        } else {
-            //ESP_LOGI(TAG, "Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
-            //ESP_LOGI(TAG,", Humidity: %.2f\n", humidity);
-            //sprintf(body, BODY_MEASURE, mac_dir, temperature , humidity , pressure);
+        if (registered) {        
+            if (bmp280_read_float(&dev, &temperature, &pressure, &humidity) != ESP_OK) {
+                ESP_LOGI(TAG, "Temperature/pressure reading failed\n");
+            } else {
+                //ESP_LOGI(TAG, "Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
+                //ESP_LOGI(TAG,", Humidity: %.2f\n", humidity);
+                sprintf(body, BODY_MEASURE, mac_dir, temperature , humidity , pressure);
+                sprintf(send_buf, REQUEST_POST, MEASUREMENT_ENDP,(int)strlen(body),body );
+                //ESP_LOGI(TAG,"body: \n%s\n",body);
+                //ESP_LOGI(TAG,"Enviando: \n%s\n",send_buf);
+            }
+        }
+        else { //Si no está registrado, registrar
             sprintf(body, BODY_DEVICE, mac_dir);
-            sprintf(send_buf, REQUEST_POST, (int)strlen(body),body );
-            //ESP_LOGI(TAG,"body: \n%s\n",body);
-            //ESP_LOGI(TAG,"Enviando: \n%s\n",send_buf);
+            sprintf(send_buf, REQUEST_POST, DEVICE_ENDP, (int)strlen(body),body );
+            registered = 1;
         } 
 
         int err = getaddrinfo(API_IP, API_PORT, &hints, &res);
@@ -100,8 +107,8 @@ static void http_get_task(void *pvParameters)
         /* Code to print the resolved IP.
 
            Note: inet_ntoa is non-reentrant, look at ipaddr_ntoa_r for "real" code */
-        addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
-        ESP_LOGI(TAG, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
+        //addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+        //ESP_LOGI(TAG, "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
 
         s = socket(res->ai_family, res->ai_socktype, 0);
         if(s < 0) {
@@ -120,7 +127,7 @@ static void http_get_task(void *pvParameters)
             continue;
         }
 
-        ESP_LOGI(TAG, "... connected");
+        //ESP_LOGI(TAG, "... connected");
         freeaddrinfo(res);
 
         if (write(s, send_buf, strlen(send_buf)) < 0) {
@@ -129,7 +136,7 @@ static void http_get_task(void *pvParameters)
             vTaskDelay(4000 / portTICK_PERIOD_MS);
             continue;
         }
-        ESP_LOGI(TAG, "... socket send success");
+        //ESP_LOGI(TAG, "... socket send success");
 
         struct timeval receiving_timeout;
         receiving_timeout.tv_sec = 5;
@@ -141,7 +148,7 @@ static void http_get_task(void *pvParameters)
             vTaskDelay(4000 / portTICK_PERIOD_MS);
             continue;
         }
-        ESP_LOGI(TAG, "... set socket receiving timeout success");
+        //ESP_LOGI(TAG, "... set socket receiving timeout success");
 
         /* Read HTTP response */
         do {
@@ -152,14 +159,14 @@ static void http_get_task(void *pvParameters)
             }
         } while(r > 0);
 
-        ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
+        //ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
 
         for(int countdown = 10; countdown >= 0; countdown--) {
             //ESP_LOGI(TAG, "%d... ", countdown);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
-        ESP_LOGI(TAG, "Otra vez");
+        //ESP_LOGI(TAG, "Otra vez");
     }
 }
 
