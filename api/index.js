@@ -49,9 +49,17 @@ app.post('/measurement', function (req, res) {
 
 app.post('/device', function (req, res) {
 	console.log("device id    : " + req.body.id + " name        : " + req.body.n + " key         : " + req.body.k );
+    var device = db.public.many("SELECT * FROM devices WHERE device_id = '"+req.body.id+"'");  
+    console.log('Prueba insertar:', device);  
+    if (device.length) {
+        console.log("Ya existe");
+        res.send("Ya existe");   
+    }
+    else {
+        db.public.none("INSERT INTO devices VALUES ('"+req.body.id+ "', '"+req.body.n+"', '"+req.body.k+"')");
+        res.send("received new device");
+    }
 
-    db.public.none("INSERT INTO devices VALUES ('"+req.body.id+ "', '"+req.body.n+"', '"+req.body.k+"')");
-	res.send("received new device");
 });
 
 

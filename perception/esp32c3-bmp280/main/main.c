@@ -26,12 +26,12 @@
 #include "../config.h"
 
 /* HTTP constants that aren't configurable in menuconfig */
-#define WEB_PATH "/measurement"
-
+//#define WEB_PATH "/measurement"
+#define WEB_PATH "/device"
 static const char *TAG = "bicho";
 
-static char *BODY = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
-
+//static char *BODY = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
+static char *BODY_DEVICE = "id=%s&n="DEVICE_NAME"&k="DEVICE_KEY"";
 static char *REQUEST_POST = "POST "WEB_PATH" HTTP/1.0\r\n"
     "Host: "API_IP_PORT"\r\n"
     "User-Agent: "USER_AGENT"\r\n"
@@ -82,11 +82,12 @@ static void http_get_task(void *pvParameters)
         } else {
             //ESP_LOGI(TAG, "Pressure: %.2f Pa, Temperature: %.2f C", pressure, temperature);
             //ESP_LOGI(TAG,", Humidity: %.2f\n", humidity);
-		    sprintf(body, BODY, mac_dir, temperature , humidity , pressure);
+            //sprintf(body, BODY_MEASURE, mac_dir, temperature , humidity , pressure);
+            sprintf(body, BODY_DEVICE, mac_dir);
             sprintf(send_buf, REQUEST_POST, (int)strlen(body),body );
             //ESP_LOGI(TAG,"body: \n%s\n",body);
-	        //ESP_LOGI(TAG,"Enviando: \n%s\n",send_buf);
-        }    
+            //ESP_LOGI(TAG,"Enviando: \n%s\n",send_buf);
+        } 
 
         int err = getaddrinfo(API_IP, API_PORT, &hints, &res);
 
