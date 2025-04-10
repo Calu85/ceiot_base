@@ -44,14 +44,23 @@ const PORT = 8080;
 app.post('/measurement', function (req, res) {
 -       console.log("device id    : " + req.body.id + " key         : " + req.body.key + " temperature : " + req.body.t + " humidity    : " + req.body.h + " pressure    : " + req.body.p);	
     const {insertedId} = insertMeasurement({id:req.body.id, t:req.body.t, h:req.body.h, p:req.body.p});
-	res.send("received measurement into " +  insertedId);
+	res.send("Medicion recibida");
 });
 
 app.post('/device', function (req, res) {
 	console.log("device id    : " + req.body.id + " name        : " + req.body.n + " key         : " + req.body.k );
+    var device = db.public.many("SELECT * FROM devices WHERE device_id = '"+req.body.id+"'");  
+    console.log('Prueba insertar:', device);  
+    if (device.length) {
+        console.log("Ya existe");
+        res.send("Ya existe");   
+    }
+    else {
+        db.public.none("INSERT INTO devices VALUES ('"+req.body.id+ "', '"+req.body.n+"', '"+req.body.k+"')");
+        console.log("Insertado nuevo dispositivo");
+        res.send("Insertado nuevo dispositivo");
+    }
 
-    db.public.none("INSERT INTO devices VALUES ('"+req.body.id+ "', '"+req.body.n+"', '"+req.body.k+"')");
-	res.send("received new device");
 });
 
 
