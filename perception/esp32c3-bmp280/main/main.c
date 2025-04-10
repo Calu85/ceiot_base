@@ -117,7 +117,7 @@ static void http_get_task(void *pvParameters)
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             continue;
         }
-        ESP_LOGI(TAG, "... allocated socket");
+        //ESP_LOGI(TAG, "... allocated socket");
 
         if(connect(s, res->ai_addr, res->ai_addrlen) != 0) {
             ESP_LOGE(TAG, "... socket connect failed errno=%d", errno);
