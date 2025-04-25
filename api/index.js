@@ -42,20 +42,23 @@ app.use(express.static('spa/static'));
 const PORT = 8080;
 
 app.post('/measurement', function (req, res) {
--       console.log("device id    : " + req.body.id + " key         : " + req.body.key + " temperature : " + req.body.t + " humidity    : " + req.body.h + " pressure    : " + req.body.p);	
+    //Presentación: se agregó presión en el listado de mediciones.
+    console.log("device id: " + req.body.id + "  key: " + req.body.key + 
+                "  temperature : " + req.body.t + "  humidity: " + req.body.h + "  pressure: " + req.body.p);	
     const {insertedId} = insertMeasurement({id:req.body.id, t:req.body.t, h:req.body.h, p:req.body.p});
 	res.send("Medicion recibida");
 });
 
 app.post('/device', function (req, res) {
-	console.log("device id    : " + req.body.id + " name        : " + req.body.n + " key         : " + req.body.k );
+	console.log("device id: " + req.body.id + "  name: " + req.body.n + "  key: " + req.body.k );
+    //Presentación: uso la mac para consultar si el device ya existe.
     var device = db.public.many("SELECT * FROM devices WHERE device_id = '"+req.body.id+"'");  
     console.log('Prueba insertar:', device);  
-    if (device.length) {
+    if (device.length) { //Presentación: Si ya existe, no lo vuelvo a registrar e informo que ya existe.
         console.log("Ya existe");
         res.send("Ya existe");   
     }
-    else {
+    else { //Presentación: Si no existe, lo inserto.
         db.public.none("INSERT INTO devices VALUES ('"+req.body.id+ "', '"+req.body.n+"', '"+req.body.k+"')");
         console.log("Insertado nuevo dispositivo");
         res.send("Insertado nuevo dispositivo");
