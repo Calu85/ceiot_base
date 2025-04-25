@@ -43,10 +43,19 @@ const PORT = 8080;
 
 app.post('/measurement', function (req, res) {
     //Presentación: se agregó presión en el listado de mediciones.
-    console.log("device id: " + req.body.id + "  key: " + req.body.key + 
-                "  temperature : " + req.body.t + "  humidity: " + req.body.h + "  pressure: " + req.body.p);	
-    const {insertedId} = insertMeasurement({id:req.body.id, t:req.body.t, h:req.body.h, p:req.body.p});
-	res.send("COD111");
+    var device = db.public.many("SELECT * FROM devices WHERE device_id = '"+req.body.id+"'");  
+    console.log('Prueba insertar:', device);  
+    if (device.length) { //Presentación: Si ya existe, inserto la medición.
+        console.log("device id: " + req.body.id + "  key: " + req.body.key + 
+            "  temperature : " + req.body.t + "  humidity: " + req.body.h + "  pressure: " + req.body.p);	
+        const {insertedId} = insertMeasurement({id:req.body.id, t:req.body.t, h:req.body.h, p:req.body.p});
+        res.send("COD111");
+    }
+    else { //Presentación: Si no existe, no hago nada y devuelvo un mensaje avisando.
+        console.log("No se reconoce dispositivo");
+        res.send("COD444");
+    }
+
 });
 
 app.post('/device', function (req, res) {
@@ -124,8 +133,7 @@ app.get('/device', function(req,res) {
 });
 
 app.get('/remove', function(req,res) {
-    res.send( db.public.many("DELETE FROM devices WHERE device_id = '01'"));
-    console.log("borrando");
+    res.send( db.public.many("DELETE FROM devices WHERE device_id = '58:cf:79:d9:8c:38'"));
 });
 
 startDatabase().then(async() => {
