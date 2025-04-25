@@ -28,6 +28,7 @@
 /* HTTP constants that aren't configurable in menuconfig */
 #define MEASUREMENT_ENDP "/measurement"
 #define DEVICE_ENDP "/device"
+
 static const char *TAG = "bicho";
 
 static char *BODY_MEASURE = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
@@ -50,6 +51,7 @@ static void http_get_task(void *pvParameters)
     };
     struct addrinfo *res;
     //struct in_addr *addr;
+    
     int s, r;
     char body[64];
     char recv_buf[64];
@@ -151,13 +153,94 @@ static void http_get_task(void *pvParameters)
         //ESP_LOGI(TAG, "... set socket receiving timeout success");
 
         /* Read HTTP response */
+
+        char* payload = NULL;        // acá está la papa
         do {
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
-            for(int i = 0; i < r; i++) {
-                putchar(recv_buf[i]);
+            //ESP_LOGI(TAG,"%s\n",recv_buf);
+            char* header_end = strstr(recv_buf, "\r\n\r\n");
+            if (header_end) {
+                payload = header_end + 4;
+                r=0; //para salir del loop con el valor encontrado
+            }        
+            // for(int i = 0; i < r; i++) {
+            //     putchar(recv_buf[i]);
+            // }
+        } while(r > 0);
+        if (payload) {
+            printf("%s\n", payload);
+        }
+        /*
+        char* full_response = NULL;  // Will hold our complete response
+        size_t response_size = 0;    // Current size of accumulated response
+        bool headers_processed = false;
+        char* payload = NULL;        // Will point to the payload portion
+
+        do {
+            bzero(recv_buf, sizeof(recv_buf));
+            r = read(s, recv_buf, sizeof(recv_buf)-1);
+            
+            if (r > 0) {
+                // Allocate or resize our full response buffer
+                char* new_buf = realloc(full_response, response_size + r + 1);
+                if (new_buf == NULL) {
+                    printf("Memory allocation failed\n");
+                    free(full_response);
+                    close(s);
+                    return; // Handle error appropriately
+                }
+                
+                full_response = new_buf;
+                
+                // Copy new data into our buffer
+                memcpy(full_response + response_size, recv_buf, r);
+                response_size += r;
+                full_response[response_size] = '\0'; // Null terminate
+                
+                // If we haven't found headers end yet, check if it's in buffer now
+                if (!headers_processed) {
+                    char* header_end = strstr(full_response, "\r\n\r\n");
+                    if (header_end) {
+                        headers_processed = true;
+                        
+                        // Payload starts right after the \r\n\r\n
+                        payload = header_end + 4;
+                        
+                        // Optional: Print header portion for debugging
+                        *header_end = '\0'; // Temporarily terminate at header end
+                        printf("Headers:\n%s\n\n", full_response);
+                        *header_end = '\r'; // Restore the \r character
+                    }
+                }
+                
+                // Print received data for debugging (optional)
+                for(int i = 0; i < r; i++) {
+                    putchar(recv_buf[i]);
+                }
             }
         } while(r > 0);
+
+        // Now payload points to the start of the payload within full_response
+        if (payload) {
+            printf("\n\nPayload:\n%s\n", payload);
+            
+            // If you need the payload as a separate string
+            char* extracted_payload = strdup(payload);
+            if (extracted_payload) {
+                // Use extracted_payload as needed
+                // Process your payload here (JSON parsing, etc.)
+                
+                // Don't forget to free when done
+                free(extracted_payload);
+            }
+        } else {
+            printf("No payload found or incomplete HTTP response\n");
+        }
+
+        // Clean up
+        free(full_response);
+        */
 
         //ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
@@ -181,3 +264,4 @@ void app_main(void)
 
     xTaskCreate(&http_get_task, "http_get_task", 4096, NULL, 5, NULL);
 }
+
