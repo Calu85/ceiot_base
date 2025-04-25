@@ -46,7 +46,7 @@ app.post('/measurement', function (req, res) {
     console.log("device id: " + req.body.id + "  key: " + req.body.key + 
                 "  temperature : " + req.body.t + "  humidity: " + req.body.h + "  pressure: " + req.body.p);	
     const {insertedId} = insertMeasurement({id:req.body.id, t:req.body.t, h:req.body.h, p:req.body.p});
-	res.send("Medicion recibida");
+	res.send("COD111");
 });
 
 app.post('/device', function (req, res) {
@@ -56,12 +56,12 @@ app.post('/device', function (req, res) {
     console.log('Prueba insertar:', device);  
     if (device.length) { //Presentación: Si ya existe, no lo vuelvo a registrar e informo que ya existe.
         console.log("Ya existe");
-        res.send("Ya existe");   
+        res.send("COD222");   
     }
     else { //Presentación: Si no existe, lo inserto.
         db.public.none("INSERT INTO devices VALUES ('"+req.body.id+ "', '"+req.body.n+"', '"+req.body.k+"')");
         console.log("Insertado nuevo dispositivo");
-        res.send("Insertado nuevo dispositivo");
+        res.send("COD333");
     }
 
 });

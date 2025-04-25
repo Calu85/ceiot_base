@@ -29,6 +29,11 @@
 #define MEASUREMENT_ENDP "/measurement"
 #define DEVICE_ENDP "/device"
 
+
+#define MEASURE_INSERTED "COD111"
+#define DEVICE_EXISTS "COD222"
+#define DEVICE_ADDED "COD333"
+
 static const char *TAG = "bicho";
 
 static char *BODY_MEASURE = "id=%s&t=%0.2f&h=%0.2f&p=%0.2f";
@@ -95,7 +100,7 @@ static void http_get_task(void *pvParameters)
         else { //Si no está registrado, registrar
             sprintf(body, BODY_DEVICE, mac_dir);
             sprintf(send_buf, REQUEST_POST, DEVICE_ENDP, (int)strlen(body),body );
-            registered = 1;
+            //registered = 1;
         } 
 
         int err = getaddrinfo(API_IP, API_PORT, &hints, &res);
@@ -154,13 +159,12 @@ static void http_get_task(void *pvParameters)
 
         /* Read HTTP response */
 
-        char* payload = NULL;        // acá está la papa
+        char* payload = NULL;  //esto va a apuntar a lo que me sirve
         do {
             bzero(recv_buf, sizeof(recv_buf));
             r = read(s, recv_buf, sizeof(recv_buf)-1);
-            //ESP_LOGI(TAG,"%s\n",recv_buf);
-            char* header_end = strstr(recv_buf, "\r\n\r\n");
-            if (header_end) {
+            char* header_end = strstr(recv_buf, "\r\n\r\n"); //comparo lo recibido para ver si está la secuencia donde arranca el payload
+            if (header_end) { //si está, le sumo cuatro caracteres y ahí arranca lo que me sirve.
                 payload = header_end + 4;
                 r=0; //para salir del loop con el valor encontrado
             }        
@@ -170,77 +174,22 @@ static void http_get_task(void *pvParameters)
         } while(r > 0);
         if (payload) {
             printf("%s\n", payload);
-        }
-        /*
-        char* full_response = NULL;  // Will hold our complete response
-        size_t response_size = 0;    // Current size of accumulated response
-        bool headers_processed = false;
-        char* payload = NULL;        // Will point to the payload portion
-
-        do {
-            bzero(recv_buf, sizeof(recv_buf));
-            r = read(s, recv_buf, sizeof(recv_buf)-1);
-            
-            if (r > 0) {
-                // Allocate or resize our full response buffer
-                char* new_buf = realloc(full_response, response_size + r + 1);
-                if (new_buf == NULL) {
-                    printf("Memory allocation failed\n");
-                    free(full_response);
-                    close(s);
-                    return; // Handle error appropriately
-                }
-                
-                full_response = new_buf;
-                
-                // Copy new data into our buffer
-                memcpy(full_response + response_size, recv_buf, r);
-                response_size += r;
-                full_response[response_size] = '\0'; // Null terminate
-                
-                // If we haven't found headers end yet, check if it's in buffer now
-                if (!headers_processed) {
-                    char* header_end = strstr(full_response, "\r\n\r\n");
-                    if (header_end) {
-                        headers_processed = true;
-                        
-                        // Payload starts right after the \r\n\r\n
-                        payload = header_end + 4;
-                        
-                        // Optional: Print header portion for debugging
-                        *header_end = '\0'; // Temporarily terminate at header end
-                        printf("Headers:\n%s\n\n", full_response);
-                        *header_end = '\r'; // Restore the \r character
-                    }
-                }
-                
-                // Print received data for debugging (optional)
-                for(int i = 0; i < r; i++) {
-                    putchar(recv_buf[i]);
-                }
+            if (!strcmp(payload,MEASURE_INSERTED)){
+                ESP_LOGI(TAG, "Medición insertada");
             }
-        } while(r > 0);
-
-        // Now payload points to the start of the payload within full_response
-        if (payload) {
-            printf("\n\nPayload:\n%s\n", payload);
-            
-            // If you need the payload as a separate string
-            char* extracted_payload = strdup(payload);
-            if (extracted_payload) {
-                // Use extracted_payload as needed
-                // Process your payload here (JSON parsing, etc.)
-                
-                // Don't forget to free when done
-                free(extracted_payload);
+            else if (!strcmp(payload,DEVICE_EXISTS)){
+                ESP_LOGI(TAG, "Dispositivo previamente registrado. Se comienza el envio de datos");
+                registered = true;
             }
-        } else {
-            printf("No payload found or incomplete HTTP response\n");
+            else if (!strcmp(payload,DEVICE_ADDED)){
+                ESP_LOGI(TAG, "Dispositivo incorporado. Se comienza el envio de datos");
+                registered = true;
+            }
+            else {
+                ESP_LOGI(TAG, "Respuesta inesperada");
+            }
         }
 
-        // Clean up
-        free(full_response);
-        */
 
         //ESP_LOGI(TAG, "... done reading from socket. Last read return=%d errno=%d.", r, errno);
         close(s);
