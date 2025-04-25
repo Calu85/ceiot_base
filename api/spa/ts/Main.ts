@@ -22,6 +22,7 @@ class Main implements EventListenerObject, GETResponseListener {
   main():void {
       this.api.requestGET("device",this);
       document.getElementById("boton").addEventListener("click",this);
+      document.getElementById("botoncalu").addEventListener("click",this);
   }
 
   handleEvent(evt:Event):void{
@@ -33,6 +34,10 @@ class Main implements EventListenerObject, GETResponseListener {
       this.api.requestGET("device",this);
       console.log("handling boton");
     }
+    if (target.id=="botoncalu") {
+      this.api.requestGET("remove",this);
+      console.log("handling boton calu");
+    }    
    
   }
 }

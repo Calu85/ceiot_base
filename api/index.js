@@ -123,6 +123,11 @@ app.get('/device', function(req,res) {
     res.send( db.public.many("SELECT * FROM devices") );
 });
 
+app.get('/remove', function(req,res) {
+    res.send( db.public.many("DELETE FROM devices WHERE device_id = '01'"));
+    console.log("borrando");
+});
+
 startDatabase().then(async() => {
 
     const addAdminEndpoint = require("./admin.js");
