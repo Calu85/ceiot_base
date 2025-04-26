@@ -44,7 +44,6 @@ const PORT = 8080;
 app.post('/measurement', function (req, res) {
     //Presentación: se agregó presión en el listado de mediciones.
     var device = db.public.many("SELECT * FROM devices WHERE device_id = '"+req.body.id+"'");  
-    console.log('Prueba insertar:', device);  
     if (device.length) { //Presentación: Si ya existe, inserto la medición.
         console.log("device id: " + req.body.id + "  key: " + req.body.key + 
             "  temperature : " + req.body.t + "  humidity: " + req.body.h + "  pressure: " + req.body.p);	
