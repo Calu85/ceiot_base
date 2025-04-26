@@ -33,6 +33,7 @@
 #define MEASURE_INSERTED "COD111"
 #define DEVICE_EXISTS "COD222"
 #define DEVICE_ADDED "COD333"
+#define DEVICE_UNRECOGNIZED "COD444"
 
 static const char *TAG = "bicho";
 
@@ -184,6 +185,10 @@ static void http_get_task(void *pvParameters)
             else if (!strcmp(payload,DEVICE_ADDED)){
                 ESP_LOGI(TAG, "Dispositivo incorporado. Se comienza el envio de datos");
                 registered = true;
+            }
+            else if (!strcmp(payload,DEVICE_UNRECOGNIZED)){
+                ESP_LOGI(TAG, "Dato rechazado porque el dispotivio no está registrado.");
+                registered = false;
             }
             else {
                 ESP_LOGI(TAG, "Respuesta inesperada");
